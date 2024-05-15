@@ -1,0 +1,17 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © marcanalella
+
+//@version=5
+//v0.1.0
+indicator("Candles Without Liquidity Indicator", overlay=true)
+
+color barColor = na
+color color = input.color(color.yellow, "Bar Color")
+
+if(close > open) // Define if green/red candle
+    barColor := (open == low)  ? color : na
+else
+    barColor := (open == high) ? color : na
+
+// Apply the color to the chart
+barcolor(barColor)

@@ -1,0 +1,73 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © marcanalella
+
+//@version=5
+//v0.1.4
+indicator("PRA", shorttitle="PRA", overlay=true)
+// Inizializza una variabile per memorizzare i massimi delle candele
+float[] candleSize = array.new_float(0)
+isDebug = input.bool(false, "Debug")
+string debugString = ""
+string debugString2 = ""
+string debugString3 = ""
+var float price_with_pips = na
+var float price_with_pips2 = na
+var float price = na
+weeklyHighs = request.security(syminfo.tickerid, "W", high)
+weeklyLows  = request.security(syminfo.tickerid, "W", low)
+weeklyCloses = request.security(syminfo.tickerid, "W", close)
+
+debugString := debugString + " syminfo.mintick " + str.tostring(syminfo.mintick) + "\n"
+// Calcola la grandezza delle candele
+
+if barstate.islast
+    for i = 0 to 51
+        array.push(candleSize, (weeklyHighs[i] - weeklyLows[i])/(syminfo.mintick))
+        debugString2 := debugString2 + " candle " + str.tostring(i) + " = " + str.tostring((weeklyHighs[i] - weeklyLows[i])/(syminfo.mintick)) + "\n"
+        if(i == 1)
+            price := weeklyCloses[i]
+            debugString := debugString + " candle " + str.tostring(i) + " = " + str.tostring((weeklyHighs[i] - weeklyLows[i])/(syminfo.mintick))
+
+    // Ordina la lista dei massimi in ordine decrescente
+    array.sort(candleSize, order.descending)
+
+    for j = 0 to 51
+        debugString3 := debugString3 + " candle " + str.tostring(j) + " = " + str.tostring(array.get(candleSize, j)) + "\n"
+
+    // Estrai i tre massimi più grandi
+    float candleSize1 = array.get(candleSize, 0)
+    float candleSize2 = array.get(candleSize, 1)
+    float candleSize3 = array.get(candleSize, 2)
+
+    debugString := debugString + " \n sizes: " + str.tostring(candleSize1) + " " + str.tostring(candleSize2) + " " + str.tostring(candleSize3)
+
+    // Calcola la media dei tre massimi più grandi
+    float avgSize = ((candleSize1 + candleSize2 + candleSize3) / 3)
+    debugString := debugString + " \n avg: " + str.tostring(avgSize)
+
+    // Calculate the price with pips added
+    price_with_pips := price + (avgSize * syminfo.mintick)
+    debugString := debugString + " \n close at bi2: " + str.tostring(close[1])
+    debugString := debugString + " \n add and: " + str.tostring(avgSize * syminfo.mintick)
+    debugString := debugString + " \n price_with_pips: " + str.tostring(price_with_pips)
+
+    price_with_pips2 := price - (avgSize * syminfo.mintick)
+    debugString := debugString + " \n price_with_pips2: " + str.tostring(price_with_pips2)
+
+    var id = label.new(x=bar_index, y=price_with_pips, text="PRA " + str.tostring(avgSize), textcolor=color.blue, style=label.style_none)
+    label.set_xy(id, bar_index, price_with_pips)
+    label.set_text(id, "PRA " + str.tostring(price_with_pips))
+    label.set_textcolor(id, color.blue)
+
+    var id2 = label.new(x=bar_index, y=price_with_pips2, text="PRA " + str.tostring(price_with_pips2), textcolor=color.red, style=label.style_none)
+    label.set_xy(id2, bar_index, price_with_pips2)
+    label.set_text(id2, "PRA " + str.tostring(price_with_pips2))
+    label.set_textcolor(id2, color.red)
+
+    line.new(x1=bar_index, y1=price_with_pips, x2=bar_index - 100, y2=price_with_pips, width=1, extend=extend.both)
+    line.new(x1=bar_index, y1=price_with_pips2, x2=bar_index - 100, y2=price_with_pips2, width=1, extend=extend.both, color = color.red)
+
+    if isDebug
+        label.new(bar_index, high, debugString, color = color.black, textcolor = color.white)
+        label.new(bar_index - 20, low, debugString2, color = color.black, textcolor = color.white)
+        label.new(bar_index - 40, low, debugString3, color = color.black, textcolor = color.white)
